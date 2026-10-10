@@ -2,7 +2,13 @@
 
 Aplikasi overlay lintas platform (Linux dan Windows) untuk menampilkan efek **laser pointer** saat presentasi atau screen sharing. Efek digambar di overlay transparan di atas layar, jadi ikut terlihat oleh audiens saat layar dibagikan lewat Zoom/Meet/Teams/OBS.
 
-> **Status:** Fase 5 (packaging + CI) sudah disiapkan: `.deb` sudah dibangun dan diperiksa secara lokal, sedangkan AppImage, `.zip`, dan `.msi` dibangun lewat GitHub Actions (belum pernah dijalankan karena proyek belum ada di GitHub). Fase 4 (tray icon + autostart) sudah diimplementasikan. Fase 3 (anotasi, termasuk kotak sudut membulat) sudah diimplementasikan. Fase 1–2 (laser, spotlight, highlight klik, hotkey, CLI, config) sudah diuji di GNOME Wayland. Kode Windows sudah ditulis dan lolos type-check, tapi **belum pernah dijalankan di Windows**.
+## Demo
+
+[![Demo Pointer: laser pointer overlay untuk presentasi dan screen sharing](https://img.youtube.com/vi/HNEtq7MrwPQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=HNEtq7MrwPQ)
+
+▶️ Tonton di YouTube: https://www.youtube.com/watch?v=HNEtq7MrwPQ
+
+> **Status:** versi 0.4.0 sudah dirilis di [GitHub Releases](https://github.com/fmarzuki/pointer/releases) (`.deb`, AppImage, `.exe`, `.zip`, `.msi`), dibangun dan diuji otomatis oleh GitHub Actions di Linux dan Windows. Fitur diuji langsung di GNOME Wayland; build Windows lolos test di CI tetapi **belum diuji langsung di Windows**.
 
 ## Fitur
 
