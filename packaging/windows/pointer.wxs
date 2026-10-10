@@ -1,0 +1,35 @@
+<!--
+  Installer MSI (WiX 5). Dibangun oleh .github/workflows/release.yml:
+    wix build packaging/windows/pointer.wxs -arch x64 -d Version=<x.y.z> -d BinDir=target\release -o dist\pointer.msi
+  UpgradeCode jangan diubah: dipakai Windows untuk mengenali versi lama saat upgrade.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Pointer"
+           Manufacturer="Farkhan Marzuki"
+           Version="$(var.Version)"
+           UpgradeCode="6E76E658-254C-457C-B1F7-7C2579307567"
+           Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Pointer is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Pointer">
+        <Component Id="PointerExe">
+          <File Id="PointerExeFile" Source="$(var.BinDir)\pointer.exe" KeyPath="yes">
+            <Shortcut Id="StartMenuShortcut"
+                      Directory="ProgramMenuFolder"
+                      Name="Pointer"
+                      Description="Laser pointer overlay for presentations"
+                      Arguments="run"
+                      WorkingDirectory="INSTALLFOLDER"
+                      Advertise="yes" />
+          </File>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="Main">
+      <ComponentRef Id="PointerExe" />
+    </Feature>
+  </Package>
+</Wix>

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Pointer
+Comment=Laser pointer overlay for presentations and screen sharing
+Exec=pointer run
+Icon=io.github.fmarzuki.Pointer
+Terminal=false
+Categories=Utility;

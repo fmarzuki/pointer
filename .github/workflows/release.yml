@@ -1,0 +1,86 @@
+# Rilis: push tag `v<versi>` yang sama dengan `version` di Cargo.toml, mis. `git tag v0.4.0`.
+# Menghasilkan .deb, AppImage, .zip (exe portable), dan .msi di GitHub Release.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  APPIMAGETOOL_VERSION: "1.9.1"
+  APPIMAGETOOL_SHA256: "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
+  WIX_VERSION: "5.0.2"
+
+jobs:
+  linux:
+    # Dibangun di 24.04 agar paket juga terpasang di distro dengan glibc 2.39.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Cek tag sama dengan versi Cargo.toml
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n1)
+          test "${GITHUB_REF_NAME#v}" = "$version" || { echo "tag $GITHUB_REF_NAME != versi $version"; exit 1; }
+      - name: Test
+        run: cargo test --locked
+      - name: Build
+        run: cargo build --release --locked
+      - name: Paket .deb
+        run: |
+          cargo install cargo-deb --locked
+          cargo deb --no-build --locked
+          mkdir -p dist && cp target/debian/*.deb dist/
+      - name: AppImage
+        run: |
+          curl -sSL -o appimagetool "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage"
+          echo "${APPIMAGETOOL_SHA256}  appimagetool" | sha256sum -c -
+          chmod +x appimagetool
+          APPIMAGETOOL="$PWD/appimagetool" scripts/build-appimage.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.deb
+            dist/*.AppImage
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Test
+        run: cargo test --locked
+      - name: Build
+        run: cargo build --release --locked
+      - name: Zip portable + MSI
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches[0].Groups[1].Value
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -Path target\release\pointer.exe, README.md, assets\fonts\OFL.txt -DestinationPath "dist\pointer-$version-windows-x64.zip"
+          dotnet tool install --global wix --version $env:WIX_VERSION
+          wix build packaging\windows\pointer.wxs -arch x64 -d Version=$version -d BinDir=target\release -o "dist\pointer-$version-x64.msi"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            dist/*.zip
+            dist/*.msi
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
