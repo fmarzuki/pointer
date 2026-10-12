@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="packaging/linux/io.github.fmarzuki.Pointer.svg" width="128" height="128" alt="Pointer icon">
+</p>
+
 # Pointer
 
 **English** | [Bahasa Indonesia](README.id.md)
