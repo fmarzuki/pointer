@@ -12,7 +12,7 @@ Saya membuatnya karena sulit menemukan tool laser pointer yang bagus untuk prese
 
 ## Demo
 
-[![Demo Pointer](https://img.youtube.com/vi/HNEtq7MrwPQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=HNEtq7MrwPQ)
+![Demo Pointer](pointer-demo.gif)
 
 ## Fitur
 

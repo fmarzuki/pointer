@@ -12,7 +12,7 @@ I built it because I couldn't find a good laser pointer tool for presenting on L
 
 ## Demo
 
-[![Pointer demo](https://img.youtube.com/vi/HNEtq7MrwPQ/maxresdefault.jpg)](https://www.youtube.com/watch?v=HNEtq7MrwPQ)
+![Pointer demo](pointer-demo.gif)
 
 ## Features
 
