@@ -1,6 +1,6 @@
 [package]
 name = "pointer"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 description = "Laser pointer, spotlight, and annotation overlay for presentations and screen sharing"
 authors = ["Farkhan Marzuki <farkhan.marzuki@unsoed.ac.id>"]

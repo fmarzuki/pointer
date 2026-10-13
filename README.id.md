@@ -18,6 +18,7 @@ Saya membuatnya karena sulit menemukan tool laser pointer yang bagus untuk prese
 
 - **Laser pointer** dengan trail yang memudar, memakai warna aktif
 - **Spotlight**: layar diredupkan kecuali di sekitar kursor
+- **Sorot kursor**: kotak bersudut bulat yang bercahaya di sekitar kursor
 - **Highlight klik**: muncul cincin di tempat Anda mengklik
 - **Anotasi**: pena, stabilo, kotak, panah, elips, garis, dan teks
 - **Edit objek**: geser, hapus, dan undo per objek anotasi
@@ -47,6 +48,7 @@ Tekan **`Ctrl+Alt+Space`** untuk membuka menu radial di posisi kursor:
 |---|---|
 | **Laser** | Nyalakan/matikan laser pointer |
 | **Spotlight** | Nyalakan/matikan spotlight |
+| **Cursor** | Nyalakan/matikan sorot kursor |
 | **Draw** | Menggambar bebas; klik lagi untuk ganti pena ↔ stabilo |
 | **Shape** | Arahkan kursor untuk memilih Box, Arrow, Ellipse, Line, atau Text |
 | **Color** | Arahkan kursor untuk memilih warna (juga dipakai laser) |
@@ -61,6 +63,7 @@ Tekan **`Ctrl+Alt+Space`** untuk membuka menu radial di posisi kursor:
 | `Ctrl+Alt+Space` | Menu radial |
 | `Ctrl+Alt+L` | Laser |
 | `Ctrl+Alt+S` | Spotlight |
+| `Ctrl+Alt+H` | Cursor |
 | `Ctrl+Alt+P` | Menggambar |
 | `Ctrl+Alt+C` | Hapus semua |
 | `Ctrl+Alt+Z` | Undo |
@@ -82,7 +85,7 @@ Tombol slideshow (panah, PageUp/PageDown, clicker) tetap berfungsi selama Pointe
 
 ```bash
 pointer                      # jalankan Pointer
-pointer laser | spotlight | draw | menu | off
+pointer laser | spotlight | cursor | draw | menu | off
 pointer clear | undo
 pointer shortcuts [--show]   # daftar shortcut (atau tampilkan di layar)
 pointer autostart on|off     # jalankan saat login
@@ -103,6 +106,11 @@ follow_color = true        # false = selalu pakai laser.color
 [spotlight]
 radius = 140.0
 dim = 0.6
+
+[cursor]
+size = 80.0
+color = "#2fd47a"
+follow_color = false       # true = pakai warna aktif
 
 [draw]
 colors = ["#ff2020", "#ffd400", "#20c040", "#2080ff", "#ffffff"]

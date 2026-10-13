@@ -18,6 +18,7 @@ I built it because I couldn't find a good laser pointer tool for presenting on L
 
 - **Laser pointer** with a fading trail, in the active color
 - **Spotlight**: dims the screen except around the cursor
+- **Cursor highlight**: a glowing rounded box around the cursor
 - **Click highlight**: a ring appears where you click
 - **Annotations**: pen, marker, box, arrow, ellipse, line, and text
 - **Edit objects**: move, delete, and undo individual annotations
@@ -47,6 +48,7 @@ Press **`Ctrl+Alt+Space`** to open the radial menu at the cursor:
 |---|---|
 | **Laser** | Toggle the laser pointer |
 | **Spotlight** | Toggle the spotlight |
+| **Cursor** | Toggle the cursor highlight |
 | **Draw** | Draw freehand; click again to switch pen ↔ marker |
 | **Shape** | Hover to pick Box, Arrow, Ellipse, Line, or Text |
 | **Color** | Hover to pick a color (also used by the laser) |
@@ -61,6 +63,7 @@ Press **`Ctrl+Alt+Space`** to open the radial menu at the cursor:
 | `Ctrl+Alt+Space` | Radial menu |
 | `Ctrl+Alt+L` | Laser |
 | `Ctrl+Alt+S` | Spotlight |
+| `Ctrl+Alt+H` | Cursor |
 | `Ctrl+Alt+P` | Draw |
 | `Ctrl+Alt+C` | Clear all |
 | `Ctrl+Alt+Z` | Undo |
@@ -82,7 +85,7 @@ Your slideshow keys (arrows, PageUp/PageDown, clickers) keep working while Point
 
 ```bash
 pointer                      # start Pointer
-pointer laser | spotlight | draw | menu | off
+pointer laser | spotlight | cursor | draw | menu | off
 pointer clear | undo
 pointer shortcuts [--show]   # list shortcuts (or show them on screen)
 pointer autostart on|off     # start at login
@@ -103,6 +106,11 @@ follow_color = true        # false = always use laser.color
 [spotlight]
 radius = 140.0
 dim = 0.6
+
+[cursor]
+size = 80.0
+color = "#2fd47a"
+follow_color = false       # true = use the active color
 
 [draw]
 colors = ["#ff2020", "#ffd400", "#20c040", "#2080ff", "#ffffff"]

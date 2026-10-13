@@ -1,5 +1,6 @@
 //! Rendering CPU dengan tiny-skia. Hanya digambar saat ada perubahan atau animasi.
 
+pub mod halo;
 pub mod help;
 pub mod ink;
 pub mod laser;
@@ -8,6 +9,7 @@ pub mod ripple;
 pub mod spotlight;
 pub mod text;
 
+use halo::HaloStyle;
 use ink::InkStyle;
 use laser::LaserStyle;
 use ripple::RippleStyle;
@@ -35,11 +37,14 @@ pub fn rgba(rgb: (u8, u8, u8), a: f32) -> Color {
 pub struct Styles {
     pub laser: LaserStyle,
     pub spotlight: SpotlightStyle,
+    pub halo: HaloStyle,
     /// `None` bila highlight klik dimatikan di config.
     pub ripple: Option<RippleStyle>,
     pub ink: InkStyle,
     /// Laser memakai warna tinta aktif, bukan `laser.color`.
     pub laser_follows_ink: bool,
+    /// Kotak mode Cursor memakai warna tinta aktif, bukan `halo.color`.
+    pub halo_follows_ink: bool,
 }
 
 impl Styles {
@@ -48,6 +53,7 @@ impl Styles {
         Self {
             laser: LaserStyle { radius: self.laser.radius * s, ..self.laser },
             spotlight: SpotlightStyle { radius: self.spotlight.radius * s, ..self.spotlight },
+            halo: HaloStyle { size: self.halo.size * s, width: self.halo.width * s, ..self.halo },
             ripple: self.ripple.map(|r| RippleStyle { radius: r.radius * s, ..r }),
             ink: InkStyle {
                 pen_width: self.ink.pen_width * s,
@@ -57,6 +63,7 @@ impl Styles {
                 ..self.ink.clone()
             },
             laser_follows_ink: self.laser_follows_ink,
+            halo_follows_ink: self.halo_follows_ink,
         }
     }
 }

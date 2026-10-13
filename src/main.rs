@@ -46,6 +46,8 @@ enum Cmd {
     Laser,
     /// Toggle the spotlight on the running daemon
     Spotlight,
+    /// Toggle the glowing box around the cursor
+    Cursor,
     /// Toggle annotation mode (pen/highlighter/shapes)
     Draw,
     /// Open/close the radial menu
@@ -93,6 +95,7 @@ fn main() -> ExitCode {
         Cmd::Run => run_daemon(),
         Cmd::Laser => client(Command::ToggleLaser),
         Cmd::Spotlight => client(Command::ToggleSpotlight),
+        Cmd::Cursor => client(Command::ToggleCursor),
         Cmd::Draw => client(Command::ToggleDraw),
         Cmd::Menu => client(Command::Menu),
         Cmd::Shortcuts { show: true } => client(Command::Shortcuts),

@@ -22,10 +22,11 @@ use crate::config::Config;
 use crate::hotkey::Handler;
 
 /// Mode yang bisa dipilih dari menu, berurutan seperti di menu.
-const MODES: [(Mode, &str); 4] = [
+const MODES: [(Mode, &str); 5] = [
     (Mode::Idle, "Off"),
     (Mode::Laser, "Laser"),
     (Mode::Spotlight, "Spotlight"),
+    (Mode::Cursor, "Cursor"),
     (Mode::Draw, "Annotate"),
 ];
 
@@ -65,6 +66,7 @@ fn perform(action: Action, current: Mode, handler: &Handler) {
         Action::SetMode(target) if target != current => handler(match target {
             Mode::Laser => Command::ToggleLaser,
             Mode::Spotlight => Command::ToggleSpotlight,
+            Mode::Cursor => Command::ToggleCursor,
             _ => Command::ToggleDraw,
         }),
         // Tetap minta status agar tray menyinkronkan centang menu.
@@ -141,10 +143,11 @@ mod tests {
         perform(Action::SetMode(Mode::Laser), Mode::Idle, &h);
         perform(Action::SetMode(Mode::Laser), Mode::Laser, &h);
         perform(Action::SetMode(Mode::Draw), Mode::Laser, &h);
-        perform(Action::SetMode(Mode::Idle), Mode::Draw, &h);
+        perform(Action::SetMode(Mode::Cursor), Mode::Draw, &h);
+        perform(Action::SetMode(Mode::Idle), Mode::Cursor, &h);
         assert_eq!(
             *log.lock().unwrap(),
-            [Command::ToggleLaser, Command::Status, Command::ToggleDraw, Command::Off]
+            [Command::ToggleLaser, Command::Status, Command::ToggleDraw, Command::ToggleCursor, Command::Off]
         );
     }
 

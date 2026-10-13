@@ -12,6 +12,7 @@ pub struct Config {
     pub hide_cursor: bool,
     pub laser: LaserConfig,
     pub spotlight: SpotlightConfig,
+    pub cursor: CursorConfig,
     pub click: ClickConfig,
     pub draw: DrawConfig,
     pub hotkeys: HotkeyConfig,
@@ -37,6 +38,19 @@ pub struct SpotlightConfig {
     pub radius: f32,
     /// Opasitas area gelap, 0.1–0.95.
     pub dim: f32,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct CursorConfig {
+    /// Ikuti warna aktif, seperti laser.
+    pub follow_color: bool,
+    /// Warna `#RRGGBB`, dipakai bila `follow_color = false`.
+    pub color: String,
+    /// Sisi kotak di sekitar kursor dalam piksel logis.
+    pub size: f32,
+    /// Tebal garis dalam piksel logis.
+    pub width: f32,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -76,6 +90,7 @@ pub struct HotkeyConfig {
     pub menu: String,
     pub laser: String,
     pub spotlight: String,
+    pub cursor: String,
     pub draw: String,
     pub clear: String,
     pub undo: String,
@@ -87,6 +102,7 @@ impl Default for Config {
             hide_cursor: true,
             laser: LaserConfig::default(),
             spotlight: SpotlightConfig::default(),
+            cursor: CursorConfig::default(),
             click: ClickConfig::default(),
             draw: DrawConfig::default(),
             hotkeys: HotkeyConfig::default(),
@@ -110,6 +126,17 @@ impl Default for SpotlightConfig {
         Self {
             radius: 140.0,
             dim: 0.6,
+        }
+    }
+}
+
+impl Default for CursorConfig {
+    fn default() -> Self {
+        Self {
+            follow_color: false,
+            color: "#2fd47a".into(),
+            size: 80.0,
+            width: 3.0,
         }
     }
 }
@@ -147,6 +174,7 @@ impl Default for HotkeyConfig {
             menu: "Ctrl+Alt+Space".into(),
             laser: "Ctrl+Alt+L".into(),
             spotlight: "Ctrl+Alt+S".into(),
+            cursor: "Ctrl+Alt+H".into(),
             draw: "Ctrl+Alt+P".into(),
             clear: "Ctrl+Alt+C".into(),
             undo: "Ctrl+Alt+Z".into(),
@@ -156,11 +184,12 @@ impl Default for HotkeyConfig {
 
 impl HotkeyConfig {
     /// Pasangan (nama field, hotkey) untuk validasi dan pesan error.
-    pub fn entries(&self) -> [(&'static str, &str); 6] {
+    pub fn entries(&self) -> [(&'static str, &str); 7] {
         [
             ("menu", &self.menu),
             ("laser", &self.laser),
             ("spotlight", &self.spotlight),
+            ("cursor", &self.cursor),
             ("draw", &self.draw),
             ("clear", &self.clear),
             ("undo", &self.undo),
@@ -204,6 +233,13 @@ impl Config {
         }
         if !(0.1..=0.95).contains(&self.spotlight.dim) {
             return Err("spotlight.dim must be between 0.1 and 0.95".into());
+        }
+        parse_hex_color(&self.cursor.color)?;
+        if !(16.0..=400.0).contains(&self.cursor.size) {
+            return Err("cursor.size must be between 16 and 400".into());
+        }
+        if !(1.0..=20.0).contains(&self.cursor.width) {
+            return Err("cursor.width must be between 1 and 20".into());
         }
         parse_hex_color(&self.click.color)?;
         if !(5.0..=200.0).contains(&self.click.radius) {
@@ -305,6 +341,8 @@ mod tests {
         assert!(Config::parse("[laser]\nradius = 0.0\n").is_err());
         assert!(Config::parse("unknown = 1\n").is_err());
         assert!(Config::parse("[spotlight]\ndim = 1.0\n").is_err());
+        assert!(Config::parse("[cursor]\nsize = 5.0\n").is_err());
+        assert!(Config::parse("[hotkeys]\ncursor = \"Ctrl+Alt+L\"\n").is_err());
         assert!(Config::parse("[click]\ncolor = \"#12\"\n").is_err());
         assert!(Config::parse("[hotkeys]\nspotlight = \"ctrl + alt+l\"\n").is_err());
         assert!(Config::parse("[draw]\ncolors = []\n").is_err());

@@ -1,4 +1,4 @@
-//! Menu radial: cincin 6 sektor di posisi kursor, tombol "Off" di tengah, dan flyout di
+//! Menu radial: cincin 7 sektor di posisi kursor, tombol "Off" di tengah, dan flyout di
 //! luar sektor Color (kipas warna) dan Shape (pilihan bentuk). Semua ukuran dalam piksel
 //! logis, dikali `scale`.
 
@@ -47,17 +47,21 @@ pub enum Item {
     Shape,
     Erase,
     Spotlight,
+    Cursor,
 }
 
-/// Urutan sektor searah jarum jam mulai dari atas; tiap sektor 60°.
-const ITEMS: [Item; 6] = [
+/// Urutan sektor searah jarum jam mulai dari atas.
+const ITEMS: [Item; 7] = [
     Item::Laser,
     Item::Draw,
     Item::Color,
     Item::Shape,
     Item::Erase,
     Item::Spotlight,
+    Item::Cursor,
 ];
+/// Lebar sudut satu sektor (derajat); sektor ke-`i` berpusat di `i * SECTOR`.
+const SECTOR: f32 = 360.0 / ITEMS.len() as f32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Hit {
@@ -108,7 +112,7 @@ fn open_flyout(hover: Option<Hit>) -> Option<Item> {
 
 /// Sudut tengah flyout = sudut tengah sektor pemiliknya.
 fn flyout_center(owner: Item) -> f32 {
-    ITEMS.iter().position(|&i| i == owner).unwrap_or(0) as f32 * 60.0
+    ITEMS.iter().position(|&i| i == owner).unwrap_or(0) as f32 * SECTOR
 }
 
 fn flyout_len(owner: Item, v: &MenuView) -> usize {
@@ -133,7 +137,8 @@ pub fn hit(v: &MenuView, (px, py): (f32, f32)) -> Hit {
         return Hit::Center;
     }
     if d <= R_OUT {
-        return Hit::Item(ITEMS[(((angle + 30.0) % 360.0) / 60.0) as usize % 6]);
+        let i = ((angle + SECTOR / 2.0) % 360.0 / SECTOR) as usize % ITEMS.len();
+        return Hit::Item(ITEMS[i]);
     }
     let (hx, hy) = help_center(v);
     if (px - hx).hypot(py - hy) <= (HELP_R + 3.0) * v.scale {
@@ -170,24 +175,24 @@ pub fn draw(pm: &mut Pixmap, v: &MenuView) {
     // Latar cincin.
     fill_circle(pm, cx, cy, R_OUT * s, Shader::SolidColor(Color::from_rgba8(16, 24, 22, 225)));
     for (i, item) in ITEMS.iter().enumerate() {
-        let from = i as f32 * 60.0 - 30.0;
+        let from = (i as f32 - 0.5) * SECTOR;
         let active = is_active(*item, v);
         let hovered = v.hover == Some(Hit::Item(*item));
         if active || hovered {
-            if let Some(p) = annular_sector(cx, cy, R_IN * s, R_OUT * s, from, from + 60.0) {
+            if let Some(p) = annular_sector(cx, cy, R_IN * s, R_OUT * s, from, from + SECTOR) {
                 let tint = if hovered { Color::from_rgba8(255, 255, 255, 30) } else { rgba(ACCENT, 0.13) };
                 fill(pm, &p, tint);
             }
         }
         if hovered {
             // Garis aksen tebal di tepi luar sektor yang disorot.
-            stroke_arc(pm, cx, cy, (R_OUT - 3.0) * s, from + 2.0, from + 58.0, 5.0 * s, rgba(ACCENT, 1.0));
+            stroke_arc(pm, cx, cy, (R_OUT - 3.0) * s, from + 2.0, from + SECTOR - 2.0, 5.0 * s, rgba(ACCENT, 1.0));
         }
     }
     // Pemisah antarsektor.
     let mut seps = PathBuilder::new();
-    for i in 0..6 {
-        let a = (i as f32 * 60.0 - 30.0).to_radians();
+    for i in 0..ITEMS.len() {
+        let a = ((i as f32 - 0.5) * SECTOR).to_radians();
         let (sx, sy) = (a.sin(), -a.cos());
         seps.move_to(cx + sx * R_IN * s, cy + sy * R_IN * s);
         seps.line_to(cx + sx * R_OUT * s, cy + sy * R_OUT * s);
@@ -206,7 +211,7 @@ pub fn draw(pm: &mut Pixmap, v: &MenuView) {
     // Ikon, label, dan sublabel status tiap sektor.
     let r_mid = (R_IN + R_OUT) / 2.0 + 4.0;
     for (i, item) in ITEMS.iter().enumerate() {
-        let a = (i as f32 * 60.0).to_radians();
+        let a = (i as f32 * SECTOR).to_radians();
         let (x, y) = (cx + a.sin() * r_mid * s, cy - a.cos() * r_mid * s);
         draw_icon(pm, *item, x, y - 14.0 * s, s, v);
         text::draw_centered(pm, label(*item), x, y + 10.0 * s, 14.0 * s, Color::WHITE);
@@ -238,6 +243,7 @@ fn label(item: Item) -> &'static str {
         Item::Shape => "Shape",
         Item::Erase => "Erase",
         Item::Spotlight => "Spotlight",
+        Item::Cursor => "Cursor",
     }
 }
 
@@ -245,6 +251,7 @@ fn is_active(item: Item, v: &MenuView) -> bool {
     match item {
         Item::Laser => v.mode == Mode::Laser,
         Item::Spotlight => v.mode == Mode::Spotlight,
+        Item::Cursor => v.mode == Mode::Cursor,
         Item::Draw => v.mode == Mode::Draw && !v.ink.tool.is_shape(),
         Item::Shape => v.mode == Mode::Draw && v.ink.tool.is_shape(),
         Item::Color | Item::Erase => false,
@@ -265,8 +272,8 @@ fn tool_name(t: Tool) -> &'static str {
 
 fn sublabel(item: Item, v: &MenuView) -> String {
     match item {
-        Item::Laser | Item::Spotlight if is_active(item, v) => "ON".into(),
-        Item::Laser | Item::Spotlight => String::new(),
+        Item::Laser | Item::Spotlight | Item::Cursor if is_active(item, v) => "ON".into(),
+        Item::Laser | Item::Spotlight | Item::Cursor => String::new(),
         Item::Draw => tool_name(v.ink.last_freehand).into(),
         Item::Shape => tool_name(v.ink.last_shape).into(),
         Item::Color => current_color(v).map(color_name).unwrap_or("").into(),
@@ -405,6 +412,25 @@ fn draw_icon(pm: &mut Pixmap, item: Item, x: f32, y: f32, s: f32, v: &MenuView) 
             fill_circle(pm, x, y, 6.0 * s, Shader::SolidColor(Color::from_rgba8(255, 250, 220, 255)));
             stroke_circle(pm, x, y, 10.0 * s, 1.5 * s, white);
         }
+        Item::Cursor => {
+            // Kotak hijau bersudut bulat mengelilingi panah kecil.
+            if let Some(p) = super::ink::rounded_rect_path((x - 10.0 * s, y - 10.0 * s), (x + 10.0 * s, y + 10.0 * s), 4.0 * s) {
+                stroke(pm, &p, 4.5 * s, rgba(ACCENT, 0.3));
+                stroke(pm, &p, 2.0 * s, rgba(ACCENT, 1.0));
+            }
+            let arrow = [(-3.0, -5.0), (-3.0, 5.0), (0.0, 2.0), (4.0, 2.0)];
+            let mut pb = PathBuilder::new();
+            pb.move_to(x + arrow[0].0 * s, y + arrow[0].1 * s);
+            for &(px, py) in &arrow[1..] {
+                pb.line_to(x + px * s, y + py * s);
+            }
+            pb.close();
+            if let Some(p) = pb.finish() {
+                let mut paint = Paint { anti_alias: true, ..Paint::default() };
+                paint.set_color(white);
+                pm.fill_path(&p, &paint, FillRule::Winding, Transform::identity(), None);
+            }
+        }
         Item::Draw => {
             if v.ink.last_freehand == Tool::Highlighter {
                 line(pm, &[(-8.0, 6.0), (8.0, -6.0)], 7.0, Color::from_rgba8(255, 220, 0, 170));
@@ -510,31 +536,36 @@ mod tests {
         }
     }
 
+    fn at(angle: f32, d: f32) -> (f32, f32) {
+        let a = angle.to_radians();
+        (300.0 + a.sin() * d, 300.0 - a.cos() * d)
+    }
+
+    /// Sudut tengah sektor `item`.
+    fn mid(item: Item) -> f32 {
+        flyout_center(item)
+    }
+
     #[test]
     fn hit_test_sectors_center_and_outside() {
         let v = view(None);
         assert_eq!(hit(&v, (300.0, 300.0)), Hit::Center);
         assert_eq!(hit(&v, (300.0, 200.0)), Hit::Item(Item::Laser), "atas");
-        assert_eq!(hit(&v, (390.0, 250.0)), Hit::Item(Item::Draw), "kanan atas");
-        assert_eq!(hit(&v, (390.0, 350.0)), Hit::Item(Item::Color), "kanan bawah");
-        assert_eq!(hit(&v, (300.0, 400.0)), Hit::Item(Item::Shape), "bawah");
-        assert_eq!(hit(&v, (210.0, 350.0)), Hit::Item(Item::Erase), "kiri bawah");
-        assert_eq!(hit(&v, (210.0, 250.0)), Hit::Item(Item::Spotlight), "kiri atas");
+        for item in ITEMS {
+            assert_eq!(hit(&v, at(mid(item), 100.0)), Hit::Item(item), "tengah sektor {item:?}");
+            assert_eq!(hit(&v, at(mid(item) + SECTOR * 0.45, 100.0)), Hit::Item(item), "tepi sektor {item:?}");
+        }
+        assert_eq!(hit(&v, at(-SECTOR * 0.45, 100.0)), Hit::Item(Item::Laser), "kiri atas Laser");
+        assert_eq!(hit(&v, at(-SECTOR, 100.0)), Hit::Item(Item::Cursor), "sektor terakhir di kiri atas");
         assert_eq!(hit(&v, (300.0, 100.0)), Hit::Outside);
     }
 
     #[test]
     fn swatches_only_hit_when_visible() {
-        // Titik di kipas warna: sudut 120° (kanan bawah), jarak 175.
-        let a = 120f32.to_radians();
-        let p = (300.0 + a.sin() * 175.0, 300.0 - a.cos() * 175.0);
+        // Titik di kipas warna, tepat di tengah sektor Color, jarak 175.
+        let p = at(mid(Item::Color), 175.0);
         assert_eq!(hit(&view(None), p), Hit::Outside);
         assert_eq!(hit(&view(Some(Hit::Item(Item::Color))), p), Hit::Swatch(2), "warna tengah dari 5");
-    }
-
-    fn at(angle: f32, d: f32) -> (f32, f32) {
-        let a = angle.to_radians();
-        (300.0 + a.sin() * d, 300.0 - a.cos() * d)
     }
 
     #[test]
@@ -547,25 +578,26 @@ mod tests {
     #[test]
     fn gap_between_ring_and_flyout_keeps_flyout_open() {
         // Celah 150..158 px: tetap sektor pemilik selama flyout terbuka.
-        assert_eq!(hit(&view(Some(Hit::Item(Item::Color))), at(120.0, 154.0)), Hit::Item(Item::Color));
-        assert_eq!(hit(&view(Some(Hit::Item(Item::Shape))), at(180.0, 154.0)), Hit::Item(Item::Shape));
-        assert_eq!(hit(&view(None), at(120.0, 154.0)), Hit::Outside, "flyout tertutup");
+        assert_eq!(hit(&view(Some(Hit::Item(Item::Color))), at(mid(Item::Color), 154.0)), Hit::Item(Item::Color));
+        assert_eq!(hit(&view(Some(Hit::Item(Item::Shape))), at(mid(Item::Shape), 154.0)), Hit::Item(Item::Shape));
+        assert_eq!(hit(&view(None), at(mid(Item::Color), 154.0)), Hit::Outside, "flyout tertutup");
     }
 
     #[test]
     fn shape_flyout_options() {
         let v = view(Some(Hit::Item(Item::Shape)));
-        // Rentang 135°..225°, 5 segmen 18°.
-        assert_eq!(hit(&v, at(140.0, 175.0)), Hit::ShapeOption(Tool::Rect));
-        assert_eq!(hit(&v, at(160.0, 175.0)), Hit::ShapeOption(Tool::Arrow));
-        assert_eq!(hit(&v, at(180.0, 175.0)), Hit::ShapeOption(Tool::Ellipse));
-        assert_eq!(hit(&v, at(197.0, 175.0)), Hit::ShapeOption(Tool::Line));
-        assert_eq!(hit(&v, at(220.0, 175.0)), Hit::ShapeOption(Tool::Text));
-        assert_eq!(hit(&v, at(240.0, 175.0)), Hit::Outside);
+        // Rentang 90° berpusat di sektor Shape, 5 segmen 18°.
+        let seg = |i: f32| at(mid(Item::Shape) - FLY_SPAN / 2.0 + 18.0 * i + 9.0, 175.0);
+        assert_eq!(hit(&v, seg(0.0)), Hit::ShapeOption(Tool::Rect));
+        assert_eq!(hit(&v, seg(1.0)), Hit::ShapeOption(Tool::Arrow));
+        assert_eq!(hit(&v, seg(2.0)), Hit::ShapeOption(Tool::Ellipse));
+        assert_eq!(hit(&v, seg(3.0)), Hit::ShapeOption(Tool::Line));
+        assert_eq!(hit(&v, seg(4.0)), Hit::ShapeOption(Tool::Text));
+        assert_eq!(hit(&v, seg(5.0)), Hit::Outside);
         // Pindah dari satu opsi ke opsi lain tetap di flyout.
         let v = view(Some(Hit::ShapeOption(Tool::Rect)));
-        assert_eq!(hit(&v, at(220.0, 175.0)), Hit::ShapeOption(Tool::Text));
-        assert_eq!(hit(&view(None), at(190.0, 175.0)), Hit::Outside, "flyout tertutup");
+        assert_eq!(hit(&v, seg(4.0)), Hit::ShapeOption(Tool::Text));
+        assert_eq!(hit(&view(None), seg(2.0)), Hit::Outside, "flyout tertutup");
     }
 
     #[test]
@@ -581,7 +613,7 @@ mod tests {
                 }
             }
         }
-        let (fx, fy) = at(180.0, 175.0);
+        let (fx, fy) = at(mid(Item::Shape), 175.0);
         assert!(pm.pixel(fx as u32, fy as u32).unwrap().alpha() > 200, "flyout bentuk tergambar");
     }
 
@@ -636,7 +668,7 @@ mod preview {
         pm.fill(Color::from_rgba8(236, 240, 238, 255));
         let ink = InkSettings { color: 0, ..InkSettings::default() };
         for (cx, hover, mode) in [
-            (250.0, Some(Hit::Item(Item::Draw)), Mode::Laser),
+            (250.0, Some(Hit::Item(Item::Cursor)), Mode::Cursor),
             (750.0, Some(Hit::ShapeOption(Tool::Ellipse)), Mode::Draw),
         ] {
             let v = MenuView { center: (cx, 260.0), scale: 1.0, hover, mode, ink, palette: &palette };

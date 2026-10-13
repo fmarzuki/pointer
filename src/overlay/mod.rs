@@ -32,7 +32,7 @@ use crate::render::help;
 use crate::render::menu::{self, Hit, MenuView};
 use crate::shortcuts::Section;
 use crate::render::ripple::Ripples;
-use crate::render::{Styles, spotlight, union_bounds};
+use crate::render::{Styles, halo, spotlight, union_bounds};
 
 /// Jarak minimum antar frame (~60 fps) agar mouse 1000 Hz tidak memicu render berlebih.
 const FRAME: Duration = Duration::from_millis(16);
@@ -537,12 +537,14 @@ impl Overlay {
         let st = &self.styles;
         let start = Instant::now();
         // Warna laser mengikuti warna aktif (bisa diganti kapan saja lewat menu radial).
+        let active = st.ink.palette.get(self.ink_settings.color).copied();
         let laser_style = LaserStyle {
-            color: match st.ink.palette.get(self.ink_settings.color) {
-                Some(&c) if st.laser_follows_ink => c,
-                _ => st.laser.color,
-            },
+            color: active.filter(|_| st.laser_follows_ink).unwrap_or(st.laser.color),
             ..st.laser
+        };
+        let halo_style = halo::HaloStyle {
+            color: active.filter(|_| st.halo_follows_ink).unwrap_or(st.halo.color),
+            ..st.halo
         };
         self.laser.prune(now, st.laser.trail);
         if let Some(r) = &st.ripple {
@@ -559,6 +561,7 @@ impl Overlay {
         let effect = match self.mode {
             Mode::Laser => self.laser.bounds(&laser_style),
             Mode::Spotlight => spotlight::bounds(self.cursor, &st.spotlight),
+            Mode::Cursor => halo::bounds(self.cursor, &halo_style),
             Mode::Draw => union_bounds(
                 self.ink.active_bounds(&st.ink),
                 self.brush_preview_at().map(|c| self.ink.preview_bounds(c, &st.ink)),
@@ -612,6 +615,7 @@ impl Overlay {
             }
             match self.mode {
                 Mode::Laser => self.laser.draw(&mut self.pixmap, now, &laser_style),
+                Mode::Cursor => halo::draw(&mut self.pixmap, self.cursor, &halo_style),
                 Mode::Draw => {
                     self.ink.draw_current(&mut self.pixmap, &st.ink);
                     if let Some(c) = self.brush_preview_at() {

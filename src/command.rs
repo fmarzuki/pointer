@@ -9,6 +9,8 @@ pub enum Command {
     ToggleLaser,
     /// Nyalakan/matikan mode spotlight.
     ToggleSpotlight,
+    /// Nyalakan/matikan mode Cursor (kotak bercahaya di sekitar kursor).
+    ToggleCursor,
     /// Nyalakan/matikan mode anotasi (pena/stabilo).
     ToggleDraw,
     /// Buka/tutup menu radial.
@@ -32,6 +34,7 @@ impl Command {
         match self {
             Command::ToggleLaser => "laser",
             Command::ToggleSpotlight => "spotlight",
+            Command::ToggleCursor => "cursor",
             Command::ToggleDraw => "draw",
             Command::Menu => "menu",
             Command::Shortcuts => "shortcuts",
@@ -57,6 +60,7 @@ impl FromStr for Command {
         match s.trim() {
             "laser" => Ok(Command::ToggleLaser),
             "spotlight" => Ok(Command::ToggleSpotlight),
+            "cursor" => Ok(Command::ToggleCursor),
             "draw" => Ok(Command::ToggleDraw),
             "menu" => Ok(Command::Menu),
             "shortcuts" => Ok(Command::Shortcuts),
@@ -79,6 +83,7 @@ mod tests {
         for c in [
             Command::ToggleLaser,
             Command::ToggleSpotlight,
+            Command::ToggleCursor,
             Command::ToggleDraw,
             Command::Menu,
             Command::Shortcuts,

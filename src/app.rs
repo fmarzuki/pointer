@@ -1,4 +1,4 @@
-//! Event loop, state machine mode (Idle, Laser, Spotlight, Draw), dan menu radial.
+//! Event loop, state machine mode (Idle, Laser, Spotlight, Cursor, Draw), dan menu radial.
 
 use std::sync::mpsc::SyncSender;
 use std::time::{Duration, Instant};
@@ -13,6 +13,7 @@ use crate::config::{Config, parse_hex_color};
 use crate::overlay::{ButtonOutcome, Overlay};
 use crate::textinput::{InputResult, TextInput};
 use crate::render::Styles;
+use crate::render::halo::HaloStyle;
 use crate::render::ink::{InkSettings, InkStyle};
 use crate::render::laser::LaserStyle;
 use crate::render::menu::{Hit, Item};
@@ -32,6 +33,8 @@ pub enum Mode {
     Idle,
     Laser,
     Spotlight,
+    /// Kotak bercahaya di sekitar kursor sistem.
+    Cursor,
     Draw,
 }
 
@@ -41,6 +44,7 @@ impl Mode {
             Mode::Idle => "idle",
             Mode::Laser => "laser",
             Mode::Spotlight => "spotlight",
+            Mode::Cursor => "cursor",
             Mode::Draw => "draw",
         }
     }
@@ -84,6 +88,11 @@ impl App {
                 radius: cfg.spotlight.radius,
                 dim: cfg.spotlight.dim,
             },
+            halo: HaloStyle {
+                color: color(&cfg.cursor.color),
+                size: cfg.cursor.size,
+                width: cfg.cursor.width,
+            },
             ripple: cfg.click.enabled.then(|| RippleStyle {
                 color: color(&cfg.click.color),
                 radius: cfg.click.radius,
@@ -98,6 +107,7 @@ impl App {
                 text_size: cfg.draw.text_size,
             },
             laser_follows_ink: cfg.laser.follow_color,
+            halo_follows_ink: cfg.cursor.follow_color,
         };
         let shortcut_sections = shortcuts::sections(&cfg.hotkeys);
         Self {
@@ -169,6 +179,7 @@ impl App {
         match cmd {
             Command::ToggleLaser => self.toggle(el, Mode::Laser),
             Command::ToggleSpotlight => self.toggle(el, Mode::Spotlight),
+            Command::ToggleCursor => self.toggle(el, Mode::Cursor),
             Command::ToggleDraw => self.toggle(el, Mode::Draw),
             Command::Shortcuts => {
                 if self.help_open {
@@ -345,6 +356,7 @@ impl App {
             Hit::Help => self.open_help(el),
             Hit::Item(Item::Laser) => self.toggle(el, Mode::Laser),
             Hit::Item(Item::Spotlight) => self.toggle(el, Mode::Spotlight),
+            Hit::Item(Item::Cursor) => self.toggle(el, Mode::Cursor),
             Hit::Item(Item::Draw) | Hit::Item(Item::Shape) => {
                 if hit == Hit::Item(Item::Draw) {
                     self.ink.select_freehand(drawing);

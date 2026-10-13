@@ -692,7 +692,7 @@ fn draw_stroke(pm: &mut Pixmap, s: &InkStroke, style: &InkStyle) {
 
 /// Kotak dari dua sudut berlawanan (urutan bebas) dengan sudut membulat. Jari-jari
 /// dibatasi setengah sisi terpendek agar sudut tidak saling bertabrakan.
-fn rounded_rect_path(a: (f32, f32), b: (f32, f32), radius: f32) -> Option<Path> {
+pub(super) fn rounded_rect_path(a: (f32, f32), b: (f32, f32), radius: f32) -> Option<Path> {
     // Konstanta Bézier kubik untuk seperempat lingkaran.
     const K: f32 = 0.552_284_8;
     let (x0, x1) = (a.0.min(b.0), a.0.max(b.0));

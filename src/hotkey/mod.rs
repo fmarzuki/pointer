@@ -50,6 +50,12 @@ pub fn bindings(cfg: &HotkeyConfig) -> Vec<Binding> {
             cmd: Command::ToggleSpotlight,
         },
         Binding {
+            id: "cursor",
+            description: "Toggle the cursor highlight",
+            keys: cfg.cursor.clone(),
+            cmd: Command::ToggleCursor,
+        },
+        Binding {
             id: "draw",
             description: "Toggle annotation mode",
             keys: cfg.draw.clone(),
